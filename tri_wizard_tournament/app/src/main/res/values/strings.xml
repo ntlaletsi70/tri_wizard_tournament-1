@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">tri_wizard_tournament</string>
+    <string name="house_list_option">House List</string>
+    <string name="student_registry_option">Student registry</string>
+    <string name="spells_registry">Spells registry</string>
+
+    <string name="mascot">Mascot :</string>
+    <string name="mascot2">mascot</string>
+    <string name="head_of_house">Head Of House :</string>
+    <string name="head_of_house2">headOfHouse</string>
+    <string name="house_ghost">House Ghost :</string>
+    <string name="house_ghost2">houseGhost</string>
+    <string name="founder">Founder :</string>
+    <string name="founder2">Founder</string>
+    <string name="school">School:</string>
+    <string name="school2">School</string>
+    <string name="members">members</string>
 </resources>

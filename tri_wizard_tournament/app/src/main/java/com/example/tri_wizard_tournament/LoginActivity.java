@@ -1,9 +1,8 @@
 package com.example.tri_wizard_tournament;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -11,7 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -27,18 +25,14 @@ import com.android.volley.toolbox.Volley;
 import java.util.ArrayList;
 import java.util.List;
 
-import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton;
-
 import static com.example.tri_wizard_tournament.ApplicationClass.CHARACTERS_URL;
 
 public class LoginActivity extends AppCompatActivity {
-    CircularProgressButton circularProgressButton;
     EditText etId;
     RequestQueue queue;
-    ProgressBar myProgressBar;
     List<Object> characters = new ArrayList<>();
     List<Object> charactersBack = new ArrayList<>();
-
+    ProgressDialog progressDialog;
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,34 +41,7 @@ public class LoginActivity extends AppCompatActivity {
 
         etId = findViewById(R.id.etId);
         queue = Volley.newRequestQueue(this);
-        circularProgressButton = (CircularProgressButton) findViewById(R.id.loginBtn);
-        circularProgressButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AsyncTask<String,String,String> demo =  new AsyncTask<String, String, String>() {
-                    @Override
-                    protected String doInBackground(String... params) {
-                        try{
-                            Thread.sleep(3000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        return "done";
-                    }
-
-                    @Override
-                    protected void onPostExecute(String s) {
-                        if(s.equals("done"))
-                        {
-                            Toast.makeText(LoginActivity.this, "done", Toast.LENGTH_SHORT).show();
-                            circularProgressButton.doneLoadingAnimation(Color.parseColor("#333639"), BitmapFactory.decodeResource(getResources(),R.drawable.ic_done_white_48dp));
-                        }
-                    }
-                };
-                circularProgressButton.startAnimation();
-                demo.execute();
-            }
-        });
+        progressDialog = new ProgressDialog(this);
     }
 
     public void btnLogin(View v) {
@@ -83,8 +50,15 @@ public class LoginActivity extends AppCompatActivity {
         if (userId.isEmpty()) {
             Toast.makeText(getApplicationContext(), "Enter  Your Id", Toast.LENGTH_LONG).show();
         } else {
+            progressDialog.setTitle("Logging you in");
+            progressDialog.setMessage("Loading...");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
 
-            new LoginInner(userId);
+            if (connectionAvailable()) {
+                final LoginQA myAsyncTask = new LoginQA();
+                myAsyncTask.execute(userId);
+            }
         }
     }
 
@@ -107,18 +81,9 @@ public class LoginActivity extends AppCompatActivity {
         private LoginInner(String userId) {
             getAllCharacters();
             charactersBack = returnAllCharacters();
-            boolean validateUser = validateUser(userId, characters);
-
-            if (validateUser) {
-                Intent intent = new Intent(getApplicationContext(), HousesList.class);
-                startActivity(intent);
-            } else {
-                Toast.makeText(getApplicationContext(), "Use Correct ID", Toast.LENGTH_LONG).show();
-
-            }
         }
 
-        private boolean validateUser(String userId, List<Object> characters) {
+        public boolean validateUser(String userId, List<Object> characters) {
             boolean status = false;
             for (int i = 0; i < characters.size() && status == false; i++) {
                 Object character = characters.get(i);
@@ -158,6 +123,36 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
             queue.add(jsonObjectRequest);
+        }
+    }
+
+    public class LoginQA extends AsyncTask<String, Void, Boolean> {
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Boolean doInBackground(String... strings) {
+            LoginInner loginInner = null;
+            try {
+                Thread.sleep(3000);
+                loginInner = new LoginInner(strings[0]);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return loginInner.validateUser(strings[0], characters);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean status) {
+            if (status.equals(true)) {
+                Intent intent = new Intent(getApplicationContext(), UserOption.class);
+                startActivity(intent);
+                progressDialog.dismiss();
+            } else {
+                progressDialog.dismiss();
+                Toast.makeText(LoginActivity.this, "Validation Failure", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }
